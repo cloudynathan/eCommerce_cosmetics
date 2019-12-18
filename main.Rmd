@@ -9,14 +9,14 @@ output: html_document
 # source: https://www.kaggle.com/mkechinov/ecommerce-events-history-in-cosmetics-shop
 
 
-# First, let's load our packages and disable scientific notation.
+# Let's load our packages and disable scientific notation.
 ```{r results = 'hide', message=FALSE, warning=FALSE}
 library(tidyverse)
 options(scipen = 999)
 ```
 
 
-# Now, let's load in the two csv files and combine them into one data.frame.
+# Load in the two csv files and combine them into one data.frame.
 ```{r}
 oct2019 <- read.csv("C:/workspaceR/eCommerce_cosmetics/oct2019.csv", stringsAsFactors=FALSE)
 nov2019 <- read.csv("C:/workspaceR/eCommerce_cosmetics/nov2019.csv", stringsAsFactors=FALSE)
@@ -41,6 +41,7 @@ df %>%
   filter(!brand == "")
 ```
 
+
 # Who purchased the most products and what do they buy?
 ```{r}
 top_buyer<- df %>% 
@@ -56,6 +57,7 @@ df %>%
   group_by(product_id) %>% 
   count(sort = TRUE)
 ```
+
 
 # Who are the top 5 buyers in terms of dollar amount? 
 ```{r}
@@ -77,6 +79,7 @@ df %>%
   head(10)
 ```
 
+
 # Which products have the best purchase to view ratio?
 ```{r}
 df %>% 
@@ -88,6 +91,93 @@ df %>%
   mutate(purchase = replace_na(purchase, 0)) %>% 
   mutate(pv_ratio = purchase/view) %>% 
   arrange(-pv_ratio)
+```
+
+
+# What day of the month do people make the most purchases? and what time of the day?
+```{r}
+df$event_time <- df$event_time %>% lubridate::ymd_hms(tz = 'UTC')
+
+parsed_event_time <- df %>% 
+    mutate(year = lubridate::year(event_time),
+           month = lubridate::month(event_time), 
+           day = lubridate::day(event_time), 
+           time_12 = format(event_time, '%I:%M %p'), 
+           time_24 = format(event_time, '%H:%M'), 
+           hour_24 = format(event_time, '%H'),
+           tz = lubridate::tz(event_time)) %>% 
+    mutate(month_day = str_c(month, "/", day)) %>% 
+    mutate(year_month_day = str_c(year, "/", month, "/", day)) %>% 
+    mutate_at(.vars = vars(year_month_day), .funs = list(~ as.Date(., "%Y/%m/%d"))) %>% 
+    mutate(weekday = weekdays(year_month_day))
+
+parsed_event_time %>% 
+  filter(event_type == 'purchase') %>%
+  group_by(day) %>% 
+  count() %>% 
+  ggplot(aes(x=day, y=n, group = 1)) + 
+    geom_line() + 
+    geom_point() +
+    ggtitle("purchases by day") + 
+    theme(plot.title = element_text(hjust = 0.5))
+
+parsed_event_time %>% 
+  filter(event_type == 'purchase') %>%
+  group_by(hour_24) %>% 
+  count() %>% 
+  ggplot(aes(x=hour_24, y=n, group = 1)) + 
+    geom_line() + 
+    geom_point() +
+    ggtitle("purchases by hour") + 
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+
+# What day of the week has the most purchases?  
+```{r}
+weekday_high <- parsed_event_time %>% 
+                    filter(event_type == 'purchase') %>% 
+                    group_by(weekday) %>% 
+                    count(sort = TRUE) %>% 
+                    head(1) %>%
+                    pull(n)
+days_of_the_week <- c('Monday', 
+                      'Tuesday', 
+                      'Wednesday', 
+                      'Thursday', 
+                      'Friday', 
+                      'Saturday', 
+                      'Sunday')
+
+parsed_event_time %>% 
+  filter(event_type == 'purchase') %>% 
+  group_by(weekday) %>% 
+  count() %>%
+  arrange(factor(weekday, levels = days_of_the_week)) %>% 
+  ungroup(weekday) %>%
+  mutate(weekday = fct_relevel(weekday, days_of_the_week)) %>%
+  ggplot(aes(x=weekday, y=n, group=1)) +
+    geom_line() + 
+    geom_point() + 
+    ggtitle("purchases by weekday") + 
+    theme(plot.title = element_text(hjust = 0.5)) +
+    ylim(0, weekday_high+20000)
+```
+
+
+# Let's track a user's history
+```{r}
+track_user <- parsed_event_time %>% filter(user_id == 520220043)
+
+track_user %>% 
+  filter(event_type == 'purchase') %>% 
+  group_by(month_day) %>% 
+  count() %>% 
+  ggplot(aes(x=month_day, y=n, group=1)) + 
+    geom_line() + 
+    geom_point() + 
+    ggtitle("purchase history of a user") + 
+    theme(plot.title = element_text(hjust = 0.5))
 ```
 
 
