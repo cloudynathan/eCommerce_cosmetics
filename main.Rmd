@@ -1,0 +1,83 @@
+---
+title: "E-commerce Cosmetics"
+author: "Nathan"
+date: "12/17/2019"
+output: html_document
+---
+
+# Exploratory data analysis of an e-commerce cosmetics shop from October 2019 to November 2019.
+# source: https://www.kaggle.com/mkechinov/ecommerce-events-history-in-cosmetics-shop
+
+
+# First, let's load our packages and disable scientific notation.
+```{r results = 'hide', message=FALSE, warning=FALSE}
+library(tidyverse)
+options(scipen = 999)
+```
+
+
+# Now, let's load in the two csv files and combine them into one data.frame.
+```{r}
+oct2019 <- read.csv("C:/workspaceR/eCommerce_cosmetics/oct2019.csv", stringsAsFactors=FALSE)
+nov2019 <- read.csv("C:/workspaceR/eCommerce_cosmetics/nov2019.csv", stringsAsFactors=FALSE)
+df <- bind_rows(oct2019, nov2019)
+
+```
+
+
+# Examine data.
+```{r}
+df %>% head()
+df %>% str()
+```
+
+
+# What are the most purchased brands?
+```{r}
+df %>% 
+  filter(event_type == 'purchase') %>% 
+  group_by(brand) %>% 
+  count(sort = TRUE) %>% 
+  filter(!brand == "")
+```
+
+# Who purchased the most products and what do they buy?
+```{r}
+top_buyer<- df %>% 
+              filter(event_type == 'purchase') %>% 
+              group_by(user_id) %>% 
+              count(sort = TRUE) %>% 
+              head(1) %>% 
+              pull(user_id)
+top_buyer
+
+df %>% 
+  filter(event_type == 'purchase' & user_id == top_buyer) %>% 
+  group_by(product_id) %>% 
+  count(sort = TRUE)
+```
+
+# Who are the top 5 buyers in terms of dollar amount? 
+```{r}
+df %>% 
+  filter(event_type == 'purchase') %>% 
+  group_by(user_id) %>% 
+  summarize(dollars_spent = sum(price)) %>% 
+  arrange(-dollars_spent) %>% 
+  head(5)
+```
+
+
+# What are the top 10 items that are removed from cart?
+```{r}
+df %>% 
+  filter(event_type == 'remove_from_cart') %>% 
+  group_by(product_id) %>% 
+  count(sort = TRUE) %>% 
+  head(10)
+```
+
+
+
+
+
