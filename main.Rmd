@@ -77,7 +77,18 @@ df %>%
   head(10)
 ```
 
-
+# Which products have the best purchase to view ratio?
+```{r}
+df %>% 
+  filter(event_type == 'view' | event_type == 'purchase') %>% 
+  group_by(product_id, event_type) %>% 
+  count() %>% 
+  pivot_wider(names_from = event_type, values_from = n) %>% 
+  select(product_id, purchase, view) %>% 
+  mutate(purchase = replace_na(purchase, 0)) %>% 
+  mutate(pv_ratio = purchase/view) %>% 
+  arrange(-pv_ratio)
+```
 
 
 
