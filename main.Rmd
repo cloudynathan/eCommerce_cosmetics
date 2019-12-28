@@ -5,18 +5,19 @@ date: "12/17/2019"
 output: html_document
 ---
 
-# Exploratory data analysis of an e-commerce cosmetics shop from October 2019 to November 2019.
-# source: https://www.kaggle.com/mkechinov/ecommerce-events-history-in-cosmetics-shop
+Exploratory data analysis of an e-commerce cosmetics shop from October 2019 to November 2019.
+source: https://www.kaggle.com/mkechinov/ecommerce-events-history-in-cosmetics-shop
 
 
-# Let's load our packages and disable scientific notation.
+Let's load our packages, disable scientific notation, and set seed for reproducable sampling.
 ```{r results = 'hide', message=FALSE, warning=FALSE}
 library(tidyverse)
 options(scipen = 999)
+set.seed(123)
 ```
 
 
-# Load in the two csv files and combine them into one data.frame.
+Load in the two csv files and combine them into one data.frame.
 ```{r}
 oct2019 <- read.csv("C:/workspaceR/eCommerce_cosmetics/oct2019.csv", stringsAsFactors=FALSE)
 nov2019 <- read.csv("C:/workspaceR/eCommerce_cosmetics/nov2019.csv", stringsAsFactors=FALSE)
@@ -25,14 +26,14 @@ df <- bind_rows(oct2019, nov2019)
 ```
 
 
-# Examine data.
+Examine data.
 ```{r}
 df %>% head()
 df %>% str()
 ```
 
 
-# What are the most purchased brands?
+What are the most purchased brands?
 ```{r}
 df %>% 
   filter(event_type == 'purchase') %>% 
@@ -42,7 +43,7 @@ df %>%
 ```
 
 
-# Who purchased the most products and what do they buy?
+Who purchased the most products and what do they buy?
 ```{r}
 top_buyer<- df %>% 
               filter(event_type == 'purchase') %>% 
@@ -59,7 +60,7 @@ df %>%
 ```
 
 
-# Who are the top 5 buyers in terms of dollar amount? 
+Who are the top 5 buyers in terms of dollar amount? 
 ```{r}
 df %>% 
   filter(event_type == 'purchase') %>% 
@@ -70,7 +71,7 @@ df %>%
 ```
 
 
-# What are the top 10 items that are removed from cart?
+What are the top 10 items that are removed from cart?
 ```{r}
 df %>% 
   filter(event_type == 'remove_from_cart') %>% 
@@ -80,7 +81,7 @@ df %>%
 ```
 
 
-# Which products have the best purchase to view ratio?
+Which products have the best purchase to view ratio?
 ```{r}
 df %>% 
   filter(event_type == 'view' | event_type == 'purchase') %>% 
@@ -94,7 +95,7 @@ df %>%
 ```
 
 
-# What day of the month do people make the most purchases? and what time of the day?
+What day of the month do people make the most purchases? and what time of the day?
 ```{r}
 df$event_time <- df$event_time %>% lubridate::ymd_hms(tz = 'UTC')
 
@@ -133,7 +134,7 @@ parsed_event_time %>%
 ```
 
 
-# What day of the week has the most purchases?  
+What day of the week has the most purchases?  
 ```{r}
 weekday_high <- parsed_event_time %>% 
                     filter(event_type == 'purchase') %>% 
@@ -165,7 +166,7 @@ parsed_event_time %>%
 ```
 
 
-# Let's track a user's history
+Let's track a user's history
 ```{r}
 track_user <- parsed_event_time %>% filter(user_id == 520220043)
 
@@ -179,6 +180,4 @@ track_user %>%
     ggtitle("purchase history of a user") + 
     theme(plot.title = element_text(hjust = 0.5))
 ```
-
-
 
